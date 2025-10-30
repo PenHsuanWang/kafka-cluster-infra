@@ -148,14 +148,22 @@ cd stress-test && ./run_stress_test.sh
 - ✅ **100,000+ messages** tested with 10 concurrent producers
 - ✅ **5 consumer groups** validated (15 consumers total)
 - ✅ **Perfect reliability** - All replicas in-sync
+- ✅ **Remote testing** - Now supports testing deployed clusters on VMs
 
 **Run Your Own Stress Test:**
 ```bash
+# Local cluster
+cd stress-test
+./run_stress_test.sh
+
+# Remote cluster
+export KAFKA_BROKERS="vm1:9092,vm2:9092,vm3:9092"
 cd stress-test
 ./run_stress_test.sh
 ```
 
-See [STRESS-TEST-GUIDE.md](STRESS-TEST-GUIDE.md) for step-by-step instructions and expected outcomes.
+See [STRESS-TEST-GUIDE.md](STRESS-TEST-GUIDE.md) for step-by-step instructions and expected outcomes.  
+See [stress-test/REMOTE-TESTING-GUIDE.md](stress-test/REMOTE-TESTING-GUIDE.md) for remote cluster testing.
 
 ---
 

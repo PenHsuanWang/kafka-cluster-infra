@@ -3,11 +3,24 @@ set -e
 
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
+RED='\033[0;31m'
+BLUE='\033[0;34m'
 NC='\033[0m'
 
 echo -e "${GREEN}============================================${NC}"
 echo -e "${GREEN}   Kafka Cluster Stress Test Suite${NC}"
 echo -e "${GREEN}============================================${NC}\n"
+
+# Detect if testing remote or local cluster
+if [ -z "$KAFKA_BROKERS" ]; then
+    echo -e "${BLUE}Mode: LOCAL (localhost)${NC}"
+    echo -e "${YELLOW}To test remote cluster, set: export KAFKA_BROKERS=\"host1:9092,host2:9092,host3:9092\"${NC}\n"
+    USE_LOCAL=true
+else
+    echo -e "${BLUE}Mode: REMOTE${NC}"
+    echo -e "${BLUE}Kafka Brokers: ${KAFKA_BROKERS}${NC}\n"
+    USE_LOCAL=false
+fi
 
 # Setup Python environment
 if [ ! -d "venv" ]; then
@@ -26,14 +39,34 @@ echo -e "\n${GREEN}✓ Environment ready${NC}\n"
 
 # Create test topic
 echo -e "${YELLOW}Creating test topic...${NC}"
-docker exec kafka-1 kafka-topics --create \
-  --bootstrap-server kafka-1:19092 \
-  --topic stress-test-topic \
-  --partitions 12 \
-  --replication-factor 3 \
-  --config min.insync.replicas=2 \
-  --config compression.type=lz4 \
-  --if-not-exists 2>/dev/null || true
+
+if [ "$USE_LOCAL" = true ]; then
+    # Local cluster: use docker exec
+    docker exec kafka-1 kafka-topics --create \
+      --bootstrap-server kafka-1:19092 \
+      --topic ${TEST_TOPIC:-stress-test-topic} \
+      --partitions ${TOPIC_PARTITIONS:-12} \
+      --replication-factor ${TOPIC_REPLICATION_FACTOR:-3} \
+      --config min.insync.replicas=${TOPIC_MIN_ISR:-2} \
+      --config compression.type=lz4 \
+      --if-not-exists 2>/dev/null || true
+else
+    # Remote cluster: use kafka-topics from local kafka installation or skip
+    if command -v kafka-topics.sh &> /dev/null || command -v kafka-topics &> /dev/null; then
+        KAFKA_CMD=$(command -v kafka-topics.sh || command -v kafka-topics)
+        $KAFKA_CMD --create \
+          --bootstrap-server ${KAFKA_BROKERS} \
+          --topic ${TEST_TOPIC:-stress-test-topic} \
+          --partitions ${TOPIC_PARTITIONS:-12} \
+          --replication-factor ${TOPIC_REPLICATION_FACTOR:-3} \
+          --config min.insync.replicas=${TOPIC_MIN_ISR:-2} \
+          --config compression.type=lz4 \
+          --if-not-exists 2>/dev/null || true
+    else
+        echo -e "${YELLOW}⚠ kafka-topics command not found. Skipping topic creation.${NC}"
+        echo -e "${YELLOW}  Please create topic '${TEST_TOPIC:-stress-test-topic}' manually on remote cluster.${NC}"
+    fi
+fi
 
 echo -e "${GREEN}✓ Topic ready${NC}\n"
 
@@ -77,6 +110,11 @@ with open('test-results/consumer_results.json') as f:
 "
 fi
 
-echo -e "\n${YELLOW}Cleanup:${NC} docker exec kafka-1 kafka-topics --delete --bootstrap-server kafka-1:19092 --topic stress-test-topic\n"
+echo -e "\n${YELLOW}Cleanup:${NC}"
+if [ "$USE_LOCAL" = true ]; then
+    echo -e "  docker exec kafka-1 kafka-topics --delete --bootstrap-server kafka-1:19092 --topic ${TEST_TOPIC:-stress-test-topic}\n"
+else
+    echo -e "  kafka-topics.sh --delete --bootstrap-server ${KAFKA_BROKERS} --topic ${TEST_TOPIC:-stress-test-topic}\n"
+fi
 
 deactivate

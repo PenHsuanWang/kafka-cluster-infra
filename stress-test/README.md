@@ -2,10 +2,13 @@
 
 Comprehensive stress testing framework for Kafka cluster with multiple producers and consumer groups, including detailed timing analysis and visualization.
 
+**✨ NEW: Remote Cluster Testing** - Now supports testing remote Kafka clusters deployed on VMs or cloud infrastructure!
+
 ## Features
 
 - ✅ **Multi-Producer Testing**: 10 concurrent producers sending 100,000 total messages
 - ✅ **Multi-Consumer Testing**: 15 consumers across 5 consumer groups
+- ✅ **Remote Cluster Support**: Test local or remote Kafka deployments
 - ✅ **Real-World Simulation**: Mimics actual production workloads
 - ✅ **Performance Metrics**: Throughput, latency (P50, P95, P99), success rates
 - ✅ **End-to-End Latency**: Measures complete message pipeline
@@ -15,10 +18,25 @@ Comprehensive stress testing framework for Kafka cluster with multiple producers
 
 ## Quick Start
 
+### Local Testing (Default)
 ```bash
 cd stress-test
 ./run_stress_test.sh
 ```
+
+### Remote Testing (NEW!)
+```bash
+cd stress-test
+
+# Simple: Using helper script
+./test-remote.sh vm1:9092 vm2:9092 vm3:9092
+
+# Advanced: Using environment variables
+export KAFKA_BROKERS="vm1.example.com:9092,vm2.example.com:9092,vm3.example.com:9092"
+./run_stress_test.sh
+```
+
+📖 **See [REMOTE-TESTING-GUIDE.md](REMOTE-TESTING-GUIDE.md) for complete remote testing documentation**
 
 This will:
 1. Setup Python environment
@@ -29,6 +47,23 @@ This will:
 
 ## Configuration
 
+### Via Environment Variables (Recommended)
+
+```bash
+# Copy example configuration
+cp .env.example .env
+
+# Edit .env file or export variables
+export KAFKA_BROKERS="vm1:9092,vm2:9092,vm3:9092"
+export NUM_PRODUCERS=20
+export MESSAGES_PER_PRODUCER=10000
+export MESSAGE_SIZE_BYTES=1024
+export NUM_CONSUMER_GROUPS=5
+export CONSUMERS_PER_GROUP=3
+```
+
+### Via config.py (Legacy)
+
 Edit `config.py` to adjust:
 
 ```python
@@ -38,6 +73,8 @@ MESSAGE_SIZE_BYTES = 1024        # Message size (1KB)
 NUM_CONSUMER_GROUPS = 5          # Number of consumer groups
 CONSUMERS_PER_GROUP = 3          # Consumers per group
 ```
+
+All settings support environment variable override.
 
 ## Individual Tests
 
@@ -126,19 +163,51 @@ docker exec kafka-1 kafka-topics --delete \
 - tqdm
 - Running Kafka cluster
 
+## Remote Testing Examples
+
+### Example 1: Test Production Cluster
+```bash
+export KAFKA_BROKERS="prod-kafka1.company.com:9092,prod-kafka2.company.com:9092,prod-kafka3.company.com:9092"
+./run_stress_test.sh
+```
+
+### Example 2: High Throughput Test
+```bash
+export KAFKA_BROKERS="10.0.1.10:9092,10.0.1.11:9092,10.0.1.12:9092"
+export NUM_PRODUCERS=20
+export MESSAGES_PER_PRODUCER=50000
+export MESSAGE_SIZE_BYTES=10240  # 10KB
+./run_stress_test.sh
+```
+
+### Example 3: Quick Smoke Test
+```bash
+./test-remote.sh kafka1.local:9092 kafka2.local:9092 kafka3.local:9092
+```
+
 ## Troubleshooting
 
 **Connection errors**: Ensure Kafka cluster is running
 ```bash
+# Local
 docker-compose ps
+
+# Remote - test connectivity
+nc -zv vm1.example.com 9092
 ```
 
 **Slow performance**: Check broker resources
 ```bash
+# Local
 docker stats kafka-1 kafka-2 kafka-3
+
+# Remote - monitor via SSH
+ssh vm1 "docker stats kafka-1"
 ```
 
 **Import errors**: Install dependencies
 ```bash
 pip install -r requirements.txt
 ```
+
+**Remote connectivity issues**: See [REMOTE-TESTING-GUIDE.md](REMOTE-TESTING-GUIDE.md) for detailed troubleshooting

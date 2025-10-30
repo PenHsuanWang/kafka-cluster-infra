@@ -1,30 +1,42 @@
 """
 Configuration file for Kafka stress testing
+Supports both local and remote Kafka clusters via environment variables
 """
+import os
 
 # Kafka cluster configuration
-KAFKA_BROKERS = [
+# Override via environment variable: KAFKA_BROKERS="host1:9092,host2:9092,host3:9092"
+_default_brokers = [
     'localhost:9092',
     'localhost:9093',
     'localhost:9094'
 ]
 
+# Read from environment or use default
+KAFKA_BROKERS_ENV = os.getenv('KAFKA_BROKERS', None)
+if KAFKA_BROKERS_ENV:
+    KAFKA_BROKERS = [broker.strip() for broker in KAFKA_BROKERS_ENV.split(',')]
+    print(f"✓ Using remote Kafka brokers from KAFKA_BROKERS: {KAFKA_BROKERS}")
+else:
+    KAFKA_BROKERS = _default_brokers
+    print(f"✓ Using local Kafka brokers (default): {KAFKA_BROKERS}")
+
 # Test configuration
-TEST_TOPIC = 'stress-test-topic'
-TEST_DURATION_SECONDS = 300  # 5 minutes
+TEST_TOPIC = os.getenv('TEST_TOPIC', 'stress-test-topic')
+TEST_DURATION_SECONDS = int(os.getenv('TEST_DURATION_SECONDS', '300'))  # 5 minutes
 
 # Producer configuration
-NUM_PRODUCERS = 10
-MESSAGES_PER_PRODUCER = 10000
-MESSAGE_SIZE_BYTES = 1024  # 1KB messages
+NUM_PRODUCERS = int(os.getenv('NUM_PRODUCERS', '10'))
+MESSAGES_PER_PRODUCER = int(os.getenv('MESSAGES_PER_PRODUCER', '10000'))
+MESSAGE_SIZE_BYTES = int(os.getenv('MESSAGE_SIZE_BYTES', '1024'))  # 1KB messages
 PRODUCER_BATCH_SIZE = 16384
 PRODUCER_LINGER_MS = 10
 PRODUCER_COMPRESSION_TYPE = 'lz4'
 PRODUCER_ACKS = 'all'
 
 # Consumer configuration
-NUM_CONSUMER_GROUPS = 5
-CONSUMERS_PER_GROUP = 3
+NUM_CONSUMER_GROUPS = int(os.getenv('NUM_CONSUMER_GROUPS', '5'))
+CONSUMERS_PER_GROUP = int(os.getenv('CONSUMERS_PER_GROUP', '3'))
 CONSUMER_AUTO_OFFSET_RESET = 'earliest'
 CONSUMER_ENABLE_AUTO_COMMIT = True
 CONSUMER_AUTO_COMMIT_INTERVAL_MS = 1000
