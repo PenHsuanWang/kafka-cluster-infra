@@ -1,0 +1,41 @@
+# Docker volumes
+volumes/
+
+# Logs
+*.log
+logs/
+
+# Backups
+backups/
+*.tar.gz
+
+# Environment overrides
+.env.local
+.env.*.local
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Temporary files
+tmp/
+temp/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+venv/
+.venv/
+*.egg-info/
+
+# Test results (large JSON files)
+stress-test/test-results/*.json
+stress-test/test-results/*.png

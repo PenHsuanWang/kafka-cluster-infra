@@ -1,385 +1,207 @@
 # Production-Ready Kafka Cluster
 
-A production-ready Apache Kafka cluster based on the "Building a Robust High‑Throughput Kafka Cluster (Bare-Metal Handbook)".
+> **Version:** 2.0 | **Last Updated:** 2025-10-30
+
+A production-ready Apache Kafka cluster with comprehensive documentation for users and developers.
+
+## 📚 Documentation
+
+This project has **two main guides**:
+
+### 1. [USER-GUIDE.md](USER-GUIDE.md) - For Operations & QA
+**For:** System Administrators, DevOps Engineers, QA Engineers
+
+Complete guide covering:
+- ✅ Getting Started (3-step quick start)
+- ✅ Cluster Management (start/stop, topics, consumer groups)
+- ✅ Monitoring & Observability (Kafka UI, JMX, health checks)
+- ✅ Performance Testing (baselines, stress tests)
+- ✅ Production Deployment (checklist, configuration)
+- ✅ Troubleshooting (common issues, solutions)
+
+### 2. [DEVELOPER-GUIDE-COMPLETE.md](DEVELOPER-GUIDE-COMPLETE.md) - For Developers
+**For:** Software Engineers, Application Developers
+
+Complete guide covering:
+- ✅ Connection Configuration (bootstrap servers, serializers)
+- ✅ Producer Development (4 patterns with code examples)
+- ✅ Consumer Development (4 patterns with code examples)
+- ✅ Best Practices (topic design, error handling, testing)
+- ✅ Code Examples (Java, Python, Node.js, Go)
+- ✅ Troubleshooting (connection, latency, duplicates)
+
+---
 
 ## Architecture
 
-- **3 ZooKeeper nodes** for metadata management and coordination
-- **3 Kafka brokers** with replication factor of 3
-- **Rack-aware** replica placement for fault tolerance
-- **Kafka UI** for monitoring and management
-- Configured for **~100 MB/s throughput** (1,000 messages/sec @ 100KB each)
+- **3 ZooKeeper nodes** - Ensemble mode for coordination
+- **3 Kafka brokers** - Replication factor 3, min ISR 2
+- **Rack-aware placement** - Fault tolerance across failure domains
+- **Kafka UI** - Web-based monitoring at http://localhost:8080
+- **JMX monitoring** - Metrics on ports 9999, 10000, 10001
+- **Target throughput:** ~100 MB/s (1,000 msgs/sec @ 100KB)
 
 ## Prerequisites
 
-- Docker 20.10+
-- Docker Compose 2.0+
-- Minimum 24GB RAM (8GB per broker)
-- Minimum 100GB disk space
+**System:**
+- Docker 20.10+ and Docker Compose 2.0+
+- 24GB RAM minimum (8GB per broker)
+- 100GB disk minimum (SSD/NVMe recommended)
 
-## 🚀 Quick Start
-
-Get your production Kafka cluster running in 3 simple steps:
-
-### Option 1: Using Make (Recommended)
-
-The easiest way to start with automatic health checks and validation:
-
+**Verify installation:**
 ```bash
-# Start the entire cluster with pre-flight checks
-make start
-
-# This will:
-# ✓ Check Docker and Docker Compose are installed
-# ✓ Verify available memory and disk space
-# ✓ Pull latest images
-# ✓ Start all services (3 ZooKeeper + 3 Kafka + UI)
-# ✓ Wait for all services to be healthy
-# ✓ Display connection information
+docker --version
+docker-compose --version
 ```
 
-**Total startup time: ~2-3 minutes**
+## 🚀 Quick Start (3 Steps)
 
-### Option 2: Using Helper Scripts
+### 1. Start Cluster
 
 ```bash
-# Start with validation
+# Using start script (recommended - includes health checks)
 ./scripts/start-cluster.sh
+
+# Or using make
+make start
 ```
 
-### Option 3: Using Docker Compose Directly
+The cluster will start:
+- 3 ZooKeeper nodes
+- 3 Kafka brokers
+- Kafka UI web console
+- JMX exporters for monitoring
+
+### 2. Verify Health
 
 ```bash
-# Start all services
-docker-compose up -d
-
-# Check status
-docker-compose ps
-```
-
-### Verify the Cluster is Running
-
-```bash
-# Run comprehensive health checks
 make health
-
-# Or manually check
-docker-compose ps
 ```
 
-All services should show status as **"Up (healthy)"**.
-
-### Access Kafka UI
-
-Open your browser and navigate to:
+Expected output:
 ```
-http://localhost:8080
+✓ ZooKeeper-1: OK
+✓ ZooKeeper-2: OK
+✓ ZooKeeper-3: OK
+✓ Kafka-1: OK
+✓ Kafka-2: OK
+✓ Kafka-3: OK
+✓ No under-replicated partitions
 ```
 
-You'll see the Kafka UI dashboard with:
-- 3 brokers online
-- Cluster overview
+### 3. Access Kafka UI
+
+Open http://localhost:8080 to see:
+- Cluster health dashboard
 - Topic management
 - Consumer group monitoring
+- Real-time metrics
 
-### Connect Your Application
+---
 
-**From your host machine:**
-```
-localhost:9092,localhost:9093,localhost:9094
-```
+## 📖 What's Next?
 
-**From another Docker container:**
-```
-kafka-1:19092,kafka-2:19093,kafka-3:19094
-```
+### For Users/Operators
+👉 **See [USER-GUIDE.md](USER-GUIDE.md)** for:
+- Cluster management operations
+- Topic and consumer group management
+- Monitoring and health checks
+- Performance testing procedures
+- Production deployment checklist
+- Complete troubleshooting guide
 
-### Next Steps
+### For Developers
+👉 **See [DEVELOPER-GUIDE-COMPLETE.md](DEVELOPER-GUIDE-COMPLETE.md)** for:
+- Producer/Consumer code examples (Java, Python, Node.js, Go)
+- 4 producer patterns (Fire-and-forget, Async, Sync, Transactional)
+- 4 consumer patterns (Auto-commit, Manual, Batch, Multi-threaded)
+- Best practices and testing strategies
+- Configuration recommendations
+- Integration troubleshooting
 
+---
+
+## Quick Reference
+
+### Access Points
+| Service | URL/Endpoint | Purpose |
+|---------|--------------|---------|
+| **Kafka UI** | http://localhost:8080 | Web console (primary) |
+| **Kafka Brokers** | localhost:9092, 9093, 9094 | Client connections |
+| **JMX Metrics** | localhost:9999, 10000, 10001 | JConsole/VisualVM |
+
+### Essential Commands
 ```bash
-# Create production-ready topics
-make topics
+make start          # Start cluster
+make stop           # Stop cluster
+make health         # Health check
+make test           # Quick performance test
+make logs           # View logs
+make ui             # Open Kafka UI
 
-# Run performance test (validates 100 MB/s throughput)
-make test
-
-# View logs
-make logs
-
-# Stop cluster
-make stop
+# Stress test (comprehensive)
+cd stress-test && ./run_stress_test.sh
 ```
 
-That's it! Your production Kafka cluster is ready to use.
+### Test Results
+- ✅ **100% success rate** - Zero message loss in all tests
+- ✅ **100,000+ messages** tested with 10 concurrent producers
+- ✅ **5 consumer groups** validated (15 consumers total)
+- ✅ **Perfect reliability** - All replicas in-sync
 
-## Configuration Highlights
-
-### Replication Settings
-- **Replication Factor**: 3 (data replicated across all brokers)
-- **Min In-Sync Replicas**: 2 (requires 2 brokers to acknowledge writes)
-- **Tolerates**: Up to 1 broker failure without data loss
-
-### Performance Tuning
-- **Compression**: LZ4 (best balance of speed and compression ratio)
-- **Network Threads**: 8 per broker
-- **I/O Threads**: 8 per broker
-- **Log Segment Size**: 1GB
-- **Socket Buffers**: 1MB send/receive
-
-### JVM Configuration
-- **Heap Size**: 8GB (configurable via KAFKA_HEAP_SIZE)
-- **GC**: G1GC with tuned pause times
-- **Max GC Pause**: 20ms target
-
-## Topic Creation
-
-Create a production topic with proper configuration:
-
+**Run Your Own Stress Test:**
 ```bash
-docker exec kafka-1 kafka-topics --create \
-  --bootstrap-server kafka-1:19092 \
-  --topic my-production-topic \
-  --partitions 12 \
-  --replication-factor 3 \
-  --config min.insync.replicas=2 \
-  --config compression.type=lz4 \
-  --config retention.ms=604800000
+cd stress-test
+./run_stress_test.sh
 ```
 
-### Recommended Partition Count
-- **Formula**: (# brokers × # cores per broker) 
-- **Example**: 3 brokers × 4 cores = 12 partitions
-- Adjust based on throughput requirements and consumer parallelism
+See [STRESS-TEST-GUIDE.md](STRESS-TEST-GUIDE.md) for step-by-step instructions and expected outcomes.
 
-## Testing the Cluster
+---
 
-### 1. Produce Test Messages
+## Project Structure
 
-```bash
-docker exec -it kafka-1 kafka-console-producer \
-  --bootstrap-server kafka-1:19092 \
-  --topic my-production-topic \
-  --producer-property acks=all \
-  --producer-property compression.type=lz4
+```
+kafka-cluster-infra/
+├── README.md                         # This file (overview)
+├── USER-GUIDE.md                     # ⭐ Complete user/ops guide
+├── DEVELOPER-GUIDE-COMPLETE.md       # ⭐ Complete developer guide
+├── STRESS_TEST_SUMMARY.md            # Test results & analysis
+├── TEST_RESULTS.md                   # Initial validation results
+├── docker-compose.yml                # Cluster configuration
+├── Makefile                          # Automation commands
+├── .env                              # Environment variables
+├── config/                           # Configuration files
+│   ├── jmx-exporter-config.yml
+│   └── prometheus/                   # (Optional) Prometheus setup
+├── scripts/                          # Helper scripts
+│   ├── start-cluster.sh
+│   ├── stop-cluster.sh
+│   ├── health-check.sh
+│   ├── create-topics.sh
+│   └── performance-test.sh
+├── stress-test/                      # Stress testing suite
+│   ├── producer_stress.py
+│   ├── consumer_stress.py
+│   └── run_stress_test.sh
+└── archived-docs/                    # Archived/legacy docs
 ```
 
-### 2. Consume Test Messages
+---
 
-```bash
-docker exec -it kafka-1 kafka-console-consumer \
-  --bootstrap-server kafka-1:19092 \
-  --topic my-production-topic \
-  --from-beginning \
-  --group test-consumer-group
-```
+## Support
 
-### 3. Performance Test
+**Troubleshooting:**
+- See [USER-GUIDE.md - Troubleshooting](USER-GUIDE.md#troubleshooting)
+- Check logs: `docker logs kafka-1`
+- Check Kafka UI: http://localhost:8080
 
-```bash
-# Producer Performance Test (100 MB/s target)
-docker exec kafka-1 kafka-producer-perf-test \
-  --topic my-production-topic \
-  --num-records 10000 \
-  --record-size 102400 \
-  --throughput 1000 \
-  --producer-props \
-    bootstrap.servers=kafka-1:19092,kafka-2:19093,kafka-3:19094 \
-    acks=all \
-    compression.type=lz4 \
-    linger.ms=100 \
-    batch.size=1048576
+**Documentation:**
+- Apache Kafka: https://kafka.apache.org/documentation/
+- Kafka UI: https://docs.kafka-ui.provectus.io/
 
-# Consumer Performance Test
-docker exec kafka-1 kafka-consumer-perf-test \
-  --topic my-production-topic \
-  --bootstrap-server kafka-1:19092 \
-  --messages 10000 \
-  --threads 12 \
-  --group perf-consumer-group
-```
+---
 
-## Monitoring
-
-### Check Cluster Health
-
-```bash
-# List all topics
-docker exec kafka-1 kafka-topics --list \
-  --bootstrap-server kafka-1:19092
-
-# Describe cluster
-docker exec kafka-1 kafka-broker-api-versions \
-  --bootstrap-server kafka-1:19092,kafka-2:19093,kafka-3:19094
-
-# Check consumer groups
-docker exec kafka-1 kafka-consumer-groups --list \
-  --bootstrap-server kafka-1:19092
-
-# Describe consumer group lag
-docker exec kafka-1 kafka-consumer-groups --describe \
-  --bootstrap-server kafka-1:19092 \
-  --group <your-consumer-group>
-```
-
-### View Logs
-
-```bash
-# All services
-docker-compose logs -f
-
-# Specific broker
-docker-compose logs -f kafka-1
-
-# ZooKeeper
-docker-compose logs -f zookeeper-1
-```
-
-### Key Metrics to Monitor
-- **Under-replicated partitions** (should be 0)
-- **ISR shrink rate** (should be low)
-- **Request latency** (p99 should be < 100ms)
-- **Network utilization** (should be < 70%)
-- **Disk utilization** (should be < 80%)
-- **CPU usage** (should be < 70% average)
-
-## Maintenance Operations
-
-### Rolling Restart
-
-```bash
-# Restart one broker at a time (wait for it to be healthy before next)
-docker-compose restart kafka-1
-sleep 30
-docker-compose restart kafka-2
-sleep 30
-docker-compose restart kafka-3
-```
-
-### Scale Out (Add Broker)
-
-1. Add new broker to `docker-compose.yml`
-2. Start the new broker:
-```bash
-docker-compose up -d kafka-4
-```
-3. Reassign partitions to include the new broker
-
-### Backup ZooKeeper Data
-
-```bash
-docker exec zookeeper-1 tar czf /tmp/zk-backup.tar.gz /var/lib/zookeeper
-docker cp zookeeper-1:/tmp/zk-backup.tar.gz ./backups/
-```
-
-## Troubleshooting
-
-### Broker Not Starting
-
-```bash
-# Check logs
-docker-compose logs kafka-1
-
-# Common issues:
-# 1. Insufficient memory - adjust KAFKA_HEAP_SIZE in .env
-# 2. ZooKeeper not ready - ensure all ZK nodes are healthy
-# 3. Port conflicts - check if ports are already in use
-```
-
-### Under-Replicated Partitions
-
-```bash
-# Check partition status
-docker exec kafka-1 kafka-topics --describe \
-  --bootstrap-server kafka-1:19092 \
-  --under-replicated-partitions
-
-# Common causes:
-# 1. Broker down - check docker-compose ps
-# 2. Network issues - check connectivity between brokers
-# 3. Disk full - check docker volume usage
-```
-
-### High Latency
-
-1. Check CPU/memory usage: `docker stats`
-2. Check disk I/O: Look for throttling in logs
-3. Verify network connectivity between brokers
-4. Review JVM GC logs for long pauses
-
-## Production Checklist
-
-- [ ] Adjust heap size based on available memory (8GB minimum)
-- [ ] Configure external access for clients outside Docker
-- [ ] Set up persistent volume mounts for production data
-- [ ] Enable SSL/TLS for encrypted communication
-- [ ] Configure SASL authentication for security
-- [ ] Set up monitoring with Prometheus + Grafana
-- [ ] Configure log aggregation (ELK stack)
-- [ ] Set up alerting for critical metrics
-- [ ] Document disaster recovery procedures
-- [ ] Schedule regular backups
-- [ ] Test failover scenarios
-
-## Security Considerations
-
-This setup uses PLAINTEXT for simplicity. For production:
-
-1. **Enable SSL/TLS**:
-   - Generate certificates for each broker
-   - Configure SSL listeners
-   - Update client configurations
-
-2. **Enable SASL Authentication**:
-   - Configure SASL mechanism (SCRAM, PLAIN, or GSSAPI)
-   - Create user credentials
-   - Set ACLs for topic access
-
-3. **Network Security**:
-   - Use firewall rules to restrict access
-   - Place Kafka cluster in private network
-   - Use VPN for remote access
-
-## Resource Requirements
-
-### Minimum (Development/Testing)
-- 3 vCPUs per broker
-- 4GB RAM per broker
-- 20GB disk per broker
-
-### Recommended (Production)
-- 8 vCPUs per broker
-- 8GB heap + 8GB page cache = 16GB RAM per broker
-- 500GB SSD/NVMe per broker
-- 10 GbE network interface
-
-### Optimal (High Throughput)
-- 16 vCPUs per broker
-- 8GB heap + 24GB page cache = 32GB RAM per broker
-- 1TB+ NVMe per broker
-- 10 GbE or higher network
-
-## Support and References
-
-Based on Apache Kafka best practices and the handbook recommendations:
-- Min 3 brokers for production
-- Replication factor of 3
-- Min in-sync replicas of 2
-- Rack-aware replica placement
-- Proper JVM tuning with G1GC
-- Adequate socket buffers for network throughput
-
-## Shutdown
-
-### Graceful Shutdown
-```bash
-docker-compose down
-```
-
-### Shutdown and Remove Volumes (DATA LOSS!)
-```bash
-docker-compose down -v
-```
-
-## License
-
-This configuration is provided as-is for production use. Adjust based on your specific requirements.
+**Project Version:** 2.0  
+**Last Updated:** 2025-10-30  
+**Status:** ✅ Production Ready

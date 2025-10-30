@@ -1,0 +1,131 @@
+version: '3.8'
+
+# KRAFT MODE CONFIGURATION (ZooKeeper-less)
+# For Kafka 3.3+, this eliminates external ZooKeeper dependency
+# Uncomment this file to use KRaft instead of ZooKeeper
+
+services:
+  # KRaft Controller 1
+  kafka-controller-1:
+    image: confluentinc/cp-kafka:7.5.0
+    hostname: kafka-controller-1
+    container_name: kafka-controller-1
+    networks:
+      - kafka-network
+    ports:
+      - "9093:9093"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka-controller-1:9093,2@kafka-controller-2:9093,3@kafka-controller-3:9093
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENERS: CONTROLLER://:9093
+      CLUSTER_ID: 'MkU3OEVBNTcwNTJENDM2Qk'
+    volumes:
+      - kafka-controller-1-data:/var/lib/kafka/data
+    restart: unless-stopped
+
+  # KRaft Controller 2
+  kafka-controller-2:
+    image: confluentinc/cp-kafka:7.5.0
+    hostname: kafka-controller-2
+    container_name: kafka-controller-2
+    networks:
+      - kafka-network
+    ports:
+      - "9094:9094"
+    environment:
+      KAFKA_NODE_ID: 2
+      KAFKA_PROCESS_ROLES: controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka-controller-1:9093,2@kafka-controller-2:9093,3@kafka-controller-3:9093
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENERS: CONTROLLER://:9094
+      CLUSTER_ID: 'MkU3OEVBNTcwNTJENDM2Qk'
+    volumes:
+      - kafka-controller-2-data:/var/lib/kafka/data
+    restart: unless-stopped
+
+  # KRaft Controller 3
+  kafka-controller-3:
+    image: confluentinc/cp-kafka:7.5.0
+    hostname: kafka-controller-3
+    container_name: kafka-controller-3
+    networks:
+      - kafka-network
+    ports:
+      - "9095:9095"
+    environment:
+      KAFKA_NODE_ID: 3
+      KAFKA_PROCESS_ROLES: controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka-controller-1:9093,2@kafka-controller-2:9093,3@kafka-controller-3:9093
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENERS: CONTROLLER://:9095
+      CLUSTER_ID: 'MkU3OEVBNTcwNTJENDM2Qk'
+    volumes:
+      - kafka-controller-3-data:/var/lib/kafka/data
+    restart: unless-stopped
+
+  # Kafka Broker 1 (KRaft mode)
+  kafka-1:
+    image: confluentinc/cp-kafka:7.5.0
+    hostname: kafka-1
+    container_name: kafka-1
+    networks:
+      - kafka-network
+    ports:
+      - "9092:9092"
+      - "19092:19092"
+    depends_on:
+      - kafka-controller-1
+      - kafka-controller-2
+      - kafka-controller-3
+    environment:
+      KAFKA_NODE_ID: 4
+      KAFKA_PROCESS_ROLES: broker
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka-controller-1:9093,2@kafka-controller-2:9093,3@kafka-controller-3:9093
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENERS: INTERNAL://0.0.0.0:19092,EXTERNAL://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka-1:19092,EXTERNAL://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      CLUSTER_ID: 'MkU3OEVBNTcwNTJENDM2Qk'
+      
+      KAFKA_BROKER_RACK: rack-1
+      KAFKA_DEFAULT_REPLICATION_FACTOR: 3
+      KAFKA_MIN_INSYNC_REPLICAS: 2
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
+      
+      KAFKA_NUM_NETWORK_THREADS: 8
+      KAFKA_NUM_IO_THREADS: 8
+      KAFKA_SOCKET_SEND_BUFFER_BYTES: 1048576
+      KAFKA_SOCKET_RECEIVE_BUFFER_BYTES: 1048576
+      KAFKA_SOCKET_REQUEST_MAX_BYTES: 104857600
+      
+      KAFKA_LOG_RETENTION_HOURS: 168
+      KAFKA_LOG_SEGMENT_BYTES: 1073741824
+      KAFKA_COMPRESSION_TYPE: lz4
+      
+      KAFKA_HEAP_OPTS: -Xmx8G -Xms8G
+      KAFKA_JVM_PERFORMANCE_OPTS: -XX:+UseG1GC -XX:MaxGCPauseMillis=20 -XX:InitiatingHeapOccupancyPercent=35
+      
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'false'
+      
+    volumes:
+      - kafka-1-data:/var/lib/kafka/data
+    restart: unless-stopped
+    ulimits:
+      nofile:
+        soft: 100000
+        hard: 100000
+
+networks:
+  kafka-network:
+    driver: bridge
+
+volumes:
+  kafka-controller-1-data:
+  kafka-controller-2-data:
+  kafka-controller-3-data:
+  kafka-1-data:
