@@ -329,7 +329,7 @@ services:
 
   # JMX Exporter for Prometheus metrics (optional but recommended)
   jmx-exporter:
-    image: bitnami/jmx-exporter:latest
+    image: soldevelo/jmx-exporter:latest
     hostname: jmx-exporter
     container_name: jmx-exporter
     networks:
